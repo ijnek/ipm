@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import Point, TransformStamped
 from ipm_library.exceptions import NoIntersectionError
 from ipm_library.ipm import IPM
-from ipm_msgs.msg import PlaneStamped, Point2DStamped
+from ipm_interfaces.msg import PlaneStamped
 import numpy as np
 import pytest
 from sensor_msgs.msg import CameraInfo
@@ -45,7 +45,7 @@ def test_ipm_camera_info():
 
 
 def test_ipm_project_point_no_transform():
-    """Project Point2DStamped without doing any tf transforms."""
+    """Project Point without doing any tf transforms."""
     # We need to create a dummy tf buffer
     tf_buffer = tf2.Buffer()
     # Dummy camera info
@@ -64,13 +64,11 @@ def test_ipm_project_point_no_transform():
     plane = PlaneStamped()
     plane.header.frame_id = 'camera_optical_frame'
     plane.plane.coef[2] = 1.0  # Normal in z direction
-    plane.plane.coef[3] = -1.0  # 1 meter distance
-    # Create Point2DStamped with the center pixel of the camera
-    point_original_x = 100.0  # in pixels
-    point_original_y = 200.0  # in pixels
-    point_original = np.array([[point_original_x], [point_original_y]])
-    point_original_msg = Point2DStamped(
-        header=cam.header, point=Point2D(x=point_original_x, y=point_original_y))
+    plane.plane.coef[3] = 1.0  # 1 meter distance
+    # Create Point with the center pixel of the camera
+    point = Point()
+    point.x = float(cam.width // cam.binning_x // 2)
+    point.y = float(cam.height // cam.binning_y // 2)
     # Project points
     point_projected_msg = ipm.project_point(plane, point_original_msg)
     # Check header
@@ -123,7 +121,7 @@ def test_ipm_project_points_no_transform():
         [0, 0, 0]
     ])
     # Project points
-    projected_points = ipm.project_points(plane, points, cam.header)
+    projected_points = ipm.project_points(plane, points)
     # Make goal points array, x and y are not exactly 0 because of the camera calibration as
     # well as an uneven amount of pixels
     goal_point_array = np.array([
@@ -136,7 +134,7 @@ def test_ipm_project_points_no_transform():
 
 
 def test_ipm_project_point_no_transform_no_intersection():
-    """Impossible projection of Point2DStamped without doing any tf transforms."""
+    """Impossible projection of Point without doing any tf transforms."""
     # We need to create a dummy tf buffer
     tf_buffer = tf2.Buffer()
     # Dummy camera info
@@ -155,12 +153,11 @@ def test_ipm_project_point_no_transform_no_intersection():
     plane = PlaneStamped()
     plane.header.frame_id = 'camera_optical_frame'
     plane.plane.coef[2] = 1.0  # Normal in z direction
-    plane.plane.coef[3] = 1.0  # 1 meter distance
-    # Create Point2DStamped with the center pixel of the camera
-    point = Point2DStamped()
-    point.header = cam.header
-    point.point.x = float(cam.width // cam.binning_x // 2)
-    point.point.y = float(cam.height // cam.binning_y // 2)
+    plane.plane.coef[3] = -1.0  # 1 meter distance
+    # Create Point with the center pixel of the camera
+    point = Point()
+    point.x = float(cam.width // cam.binning_x // 2)
+    point.y = float(cam.height // cam.binning_y // 2)
     # Test if a NoIntersectionError is raised
     with pytest.raises(NoIntersectionError):
         # Project points
@@ -194,7 +191,7 @@ def test_ipm_project_points_no_transform_no_intersection():
         [0, 0, 0]
     ])
     # Project points
-    projected_points = ipm.project_points(plane, points, cam.header)
+    projected_points = ipm.project_points(plane, points)
     # Make goal points array, x and y are not exactly 0 because of the camera calibration as
     # well as an uneven amount of pixels
     goal_point_array = np.array([
@@ -207,7 +204,7 @@ def test_ipm_project_points_no_transform_no_intersection():
 
 
 def test_ipm_project_point():
-    """Project Point2DStamped without doing any tf transforms."""
+    """Project Point without doing any tf transforms."""
     # We need to create a dummy tf buffer
     tf_buffer = tf2.Buffer()
     transform = TransformStamped()
@@ -232,11 +229,10 @@ def test_ipm_project_point():
     plane = PlaneStamped()
     plane.header.frame_id = 'base_footprint'
     plane.plane.coef[2] = 1.0  # Normal in z direction
-    # Create Point2DStamped with the center pixel of the camera
-    point = Point2DStamped()
-    point.header = cam.header
-    point.point.x = float(cam.width // cam.binning_x // 2)
-    point.point.y = float(cam.height // cam.binning_y // 2)
+    # Create Point with the center pixel of the camera
+    point = Point()
+    point.x = float(cam.width // cam.binning_x // 2)
+    point.y = float(cam.height // cam.binning_y // 2)
     # Project points
     projected_point = ipm.project_point(
         plane, point, output_frame=plane.header.frame_id)
@@ -295,7 +291,6 @@ def test_ipm_project_points():
     projected_points = ipm.project_points(
         plane,
         points=points,
-        points_header=cam.header,
         output_frame=plane.header.frame_id)
     # Make goal points array, x and y are not exactly 0 because of the camera calibration as
     # well as an uneven amount of pixels
