@@ -27,17 +27,28 @@ class IPMService(Node):
 
     def __init__(self) -> None:
         super().__init__('ipm_service')
-        self.tf_buffer = tf2.Buffer(Duration(seconds=5))   # TODO param
-        self.tf_listener = tf2.TransformListener(self.tf_buffer, self)
-        self.ipm = IPM(self.tf_buffer)
+        # self.tf_buffer = tf2.Buffer(Duration(seconds=5))   # TODO param
+        # self.tf_listener = tf2.TransformListener(self.tf_buffer, self)
+        # self.ipm = IPM(self.tf_buffer)
         self.camera_info_sub = self.create_subscription(
-            CameraInfo, 'camera_info', self.ipm.set_camera_info)
+            CameraInfo, 'camera_info', self.subscription_callback, 10)
+        # self.camera_info_sub = self.create_subscription(
+        #     CameraInfo, 'camera_info', self.ipm.set_camera_info)
         self.point_srv = self.create_service(
             ProjectPoint, 'project_point', self.point_projection_callback)
         self.point_cloud_srv = self.create_service(
             ProjectPointCloud2, 'project_pointcloud2', self.point_cloud_projection_callback)
 
-    def point_projection_callback(self, request, response):
+    def subscription_callback(self, msg):
+        return
+
+    def point_projection_callback(
+            self,
+            request: ProjectPoint.Request,
+            response: ProjectPoint.Response) -> ProjectPoint.Response:
+        response.result = ProjectPoint.Response.RESULT_NO_CAMERA_INFO
+        return response
+
         # Map optional marking from '' to None
         if request.output_frame == '':
             output_frame = None
@@ -50,7 +61,13 @@ class IPMService(Node):
             output_frame).point
         return response
 
-    def point_cloud_projection_callback(self, request, response):
+    def point_cloud_projection_callback(
+            self,
+            request: ProjectPointCloud2.Request,
+            response: ProjectPointCloud2.Response) -> ProjectPointCloud2.Response:
+        response.result = ProjectPointCloud2.Response.RESULT_NO_CAMERA_INFO
+        return response
+
         # Map optional marking from '' to None
         if request.output_frame == '':
             output_frame = self.ipm.get_camera_info().header.frame_id
