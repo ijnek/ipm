@@ -25,7 +25,7 @@ import tf2_ros as tf2
 
 class IPMService(Node):
     def __init__(self) -> None:
-        super().__init__("ipm_service")
+        super().__init__('ipm_service')
         self.tf_buffer = tf2.Buffer(Duration(seconds=5))   # TODO param
         self.tf_listener = tf2.TransformListener(self.tf_buffer, self)
         self.ipm = IPM(self.tf_buffer)
@@ -37,8 +37,8 @@ class IPMService(Node):
             ProjectPointCloud2, 'project_pointcloud2', self.point_cloud_projection_callback)
 
     def point_projection_callback(self, request, response):
-        # Map optional marking from "" to None
-        if request.output_frame == "":
+        # Map optional marking from '' to None
+        if request.output_frame == '':
             output_frame = None
         else:
             output_frame = request.output_frame
@@ -50,8 +50,8 @@ class IPMService(Node):
         return response
 
     def point_cloud_projection_callback(self, request, response):
-        # Map optional marking from "" to None
-        if request.output_frame == "":
+        # Map optional marking from '' to None
+        if request.output_frame == '':
             output_frame = self.ipm.get_camera_info().header.frame_id
         else:
             output_frame = request.output_frame
