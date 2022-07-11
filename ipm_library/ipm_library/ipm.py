@@ -60,7 +60,7 @@ class IPM:
         """
         return self._camera_info
 
-    def camera_info_recived(self) -> bool:
+    def camera_info_received(self) -> bool:
         """
         Return if `CameraInfo` message has been received.
 
@@ -122,7 +122,7 @@ class IPM:
         :param output_frame: TF2 frame in which the output should be provided
         :returns: The points projected onto the given plane in the output frame
         """
-        assert self.camera_info_recived(), "No camera info set"
+        assert self.camera_info_received(), "No camera info set"
 
         # Convert plane from general form to point normal form
         plane = utils.plane_general_to_point_normal(plane_msg.plane)
