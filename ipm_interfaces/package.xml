@@ -2,7 +2,7 @@
 <package format="3">
   <name>ipm_interfaces</name>
   <version>0.0.0</version>
-  <description>Message and Service Definitions for the Inverse Perspective Mapping</description>
+  <description>Message and Service Definitions for Inverse Perspective Mapping</description>
   <maintainer email="git@flova.de">Florian Vahl</maintainer>
   <license>Apache License 2.0</license>
 
