@@ -15,9 +15,9 @@
 from typing import Optional
 
 from geometry_msgs.msg import Point
+from ipm_interfaces.msg import PlaneStamped
 from ipm_library import utils
 from ipm_library.exceptions import NoIntersectionError
-from ipm_interfaces.msg import PlaneStamped
 import numpy as np
 from sensor_msgs.msg import CameraInfo
 from tf2_geometry_msgs import PointStamped
@@ -54,7 +54,7 @@ class IPM:
 
     def get_camera_info(self) -> CameraInfo:
         """
-        Gets the current CameraInfo
+        Get the current CameraInfo.
 
         :returns: The current camera info message.
         """
