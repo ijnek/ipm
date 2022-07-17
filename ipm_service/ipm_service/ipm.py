@@ -13,14 +13,14 @@
 # limitations under the License.
 
 from ipm_interfaces.srv import ProjectPoint, ProjectPointCloud2
-from ipm_library.ipm import IPM
+# from ipm_library.ipm import IPM
 import rclpy
-from rclpy.duration import Duration
+# from rclpy.duration import Duration
 from rclpy.node import Node
 from sensor_msgs.msg import CameraInfo
 from sensor_msgs_py.point_cloud2 import create_cloud_xyz32, read_points_numpy
 from std_msgs.msg import Header
-import tf2_ros as tf2
+# import tf2_ros as tf2
 
 
 class IPMService(Node):
