@@ -17,7 +17,7 @@ from typing import Optional
 from geometry_msgs.msg import Point
 from ipm_interfaces.msg import PlaneStamped
 from ipm_library import utils
-from ipm_library.exceptions import NoIntersectionError
+from ipm_library.exceptions import InvalidPlaneException, NoIntersectionError
 import numpy as np
 from sensor_msgs.msg import CameraInfo
 from tf2_geometry_msgs import PointStamped
@@ -82,6 +82,9 @@ class IPM:
         :param output_frame: TF2 frame in which the output should be provided
         :returns: The point projected onto the given plane in the output frame
         """
+        if plane.plane.coef[0] == 0 and plane.plane.coef[1] == 0 and plane.plane.coef[2] == 0:
+            raise InvalidPlaneException
+
         # Convert point to numpy and utilize numpy projection function
         np_point = self.project_points(
             plane,
