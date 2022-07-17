@@ -50,12 +50,7 @@ def test_project_point_no_camera_info():
     test_node = rclpy.node.Node('test')
 
     client = test_node.create_client(ProjectPoint, 'project_point')
-
-    req = ProjectPoint.Request()
-    req.point.x = 1.0
-    req.point.y = 1.0
-    req.point.z = 1.0
-    future = client.call_async(req)
+    future = client.call_async(ProjectPoint.Request())
     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
 
     rclpy.spin_once(test_node, timeout_sec=0.1)
@@ -73,10 +68,7 @@ def test_project_point_cloud_no_camera_info():
     test_node = rclpy.node.Node('test')
 
     client = test_node.create_client(ProjectPointCloud2, 'project_pointcloud2')
-
-    req = ProjectPointCloud2.Request()
-    req.points = create_cloud_xyz32(Header(), [])
-    future = client.call_async(req)
+    future = client.call_async(ProjectPointCloud2.Request())
     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
 
     rclpy.spin_once(test_node, timeout_sec=0.1)
