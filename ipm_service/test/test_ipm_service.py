@@ -12,12 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# from geometry_msgs.msg import Point
+from ipm_interfaces.msg import PlaneStamped
 from ipm_interfaces.srv import ProjectPoint, ProjectPointCloud2
+# from ipm_library.ipm import IPM
 from ipm_service.ipm import IPMService
 import rclpy
 from sensor_msgs.msg import CameraInfo
-from sensor_msgs_py.point_cloud2 import create_cloud_xyz32
-from std_msgs.msg import Header
+# from sensor_msgs_py.point_cloud2 import create_cloud_xyz32
+from shape_msgs.msg import Plane
+# from std_msgs.msg import Header
+# from tf2_ros import Buffer
 
 
 def test_topics_and_services():
@@ -79,51 +84,112 @@ def test_project_point_cloud_no_camera_info():
     rclpy.shutdown()
 
 
-def test_project_point():
+def test_project_point_invalid_plane():
 
     rclpy.init()
     ipm_service_node = IPMService()
     test_node = rclpy.node.Node('test')
 
     camera_info_pub = test_node.create_publisher(CameraInfo, 'camera_info', 10)
-    camera_info_pub.publish(CameraInfo())
+    camera_info = CameraInfo()
+    camera_info_pub.publish(camera_info)
     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
 
     client = test_node.create_client(ProjectPoint, 'project_point')
+    # Request with the default plane a=b=c=0 should be an invalid plane
     req = ProjectPoint.Request()
-    req.point.x = 1.0
-    req.point.y = 1.0
-    req.point.z = 1.0
     future = client.call_async(req)
     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
 
     rclpy.spin_once(test_node, timeout_sec=0.1)
 
     assert future.result() is not None
-    assert future.result().result == ProjectPoint.Response.RESULT_SUCCESS
+    assert future.result().result == ProjectPoint.Response.RESULT_INVALID_PLANE
 
     rclpy.shutdown()
 
 
-def test_project_point_cloud():
+def test_project_point_no_intersection_error():
 
     rclpy.init()
     ipm_service_node = IPMService()
     test_node = rclpy.node.Node('test')
 
     camera_info_pub = test_node.create_publisher(CameraInfo, 'camera_info', 10)
-    camera_info_pub.publish(CameraInfo())
+    camera_info = CameraInfo()
+    camera_info_pub.publish(camera_info)
     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
 
-    client = test_node.create_client(ProjectPointCloud2, 'project_pointcloud2')
-    req = ProjectPointCloud2.Request()
-    req.points = create_cloud_xyz32(Header(), [])
+    client = test_node.create_client(ProjectPoint, 'project_point')
+    req = ProjectPoint.Request(plane=PlaneStamped(plane=Plane(coef=[0, 0, 1, 1])))
     future = client.call_async(req)
     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
 
     rclpy.spin_once(test_node, timeout_sec=0.1)
 
     assert future.result() is not None
-    assert future.result().result == ProjectPoint.Response.RESULT_SUCCESS
+    assert future.result().result == ProjectPoint.Response.RESULT_NO_INTERSECTION
 
     rclpy.shutdown()
+
+
+# def test_project_point():
+
+#     rclpy.init()
+#     ipm_service_node = IPMService()
+#     test_node = rclpy.node.Node('test')
+
+#     camera_info_pub = test_node.create_publisher(CameraInfo, 'camera_info', 10)
+#     camera_info = CameraInfo()
+#     camera_info_pub.publish(camera_info)
+#     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
+#     point = Point()
+#     point.x = 1.0
+#     point.y = 1.0
+#     point.z = 1.0
+
+#     # YZ-plane at x = 1.0
+#     plane = PlaneStamped()
+#     plane.plane.coef[2] = 1.0
+#     plane.plane.coef[3] = -1.0
+
+#     client = test_node.create_client(ProjectPoint, 'project_point')
+#     req = ProjectPoint.Request(point=point, plane=plane)
+#     future = client.call_async(req)
+#     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
+#     rclpy.spin_once(test_node, timeout_sec=0.1)
+
+#     assert future.result() is not None
+#     assert future.result().result == ProjectPoint.Response.RESULT_SUCCESS
+
+#     ipm = IPM(Buffer(), camera_info)
+#     expected_point = ipm.project_point(plane, point)
+#     assert future.result().point == expected_point
+
+#     rclpy.shutdown()
+
+
+# def test_project_point_cloud():
+
+#     rclpy.init()
+#     ipm_service_node = IPMService()
+#     test_node = rclpy.node.Node('test')
+
+#     camera_info_pub = test_node.create_publisher(CameraInfo, 'camera_info', 10)
+#     camera_info_pub.publish(CameraInfo())
+#     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
+#     client = test_node.create_client(ProjectPointCloud2, 'project_pointcloud2')
+#     req = ProjectPointCloud2.Request()
+#     req.points = create_cloud_xyz32(Header(), [])
+#     future = client.call_async(req)
+#     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
+#     rclpy.spin_once(test_node, timeout_sec=0.1)
+
+#     assert future.result() is not None
+#     assert future.result().result == ProjectPoint.Response.RESULT_SUCCESS
+
+#     rclpy.shutdown()

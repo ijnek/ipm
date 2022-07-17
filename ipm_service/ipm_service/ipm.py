@@ -13,14 +13,15 @@
 # limitations under the License.
 
 from ipm_interfaces.srv import ProjectPoint, ProjectPointCloud2
-# from ipm_library.ipm import IPM
+from ipm_library.exceptions import InvalidPlaneException, NoIntersectionError
+from ipm_library.ipm import IPM
 import rclpy
 # from rclpy.duration import Duration
 from rclpy.node import Node
 from sensor_msgs.msg import CameraInfo
 from sensor_msgs_py.point_cloud2 import create_cloud_xyz32, read_points_numpy
 from std_msgs.msg import Header
-# import tf2_ros as tf2
+from tf2_ros import Buffer
 
 
 class IPMService(Node):
@@ -31,6 +32,7 @@ class IPMService(Node):
         # self.tf_buffer = tf2.Buffer(Duration(seconds=5))   # TODO param
         # self.tf_listener = tf2.TransformListener(self.tf_buffer, self)
         # self.ipm = IPM(self.tf_buffer)
+        self.ipm = IPM(Buffer())
         self.camera_info_sub = self.create_subscription(
             CameraInfo, 'camera_info', self.camera_info_cb, 10)
         # self.camera_info_sub = self.create_subscription(
@@ -42,6 +44,7 @@ class IPMService(Node):
 
     def camera_info_cb(self, msg: CameraInfo) -> None:
         self._has_recevied_camera_info = True
+        self.ipm.set_camera_info(msg)
 
     def point_projection_callback(
             self,
@@ -52,7 +55,14 @@ class IPMService(Node):
             response.result = ProjectPoint.Response.RESULT_NO_CAMERA_INFO
             return response
 
-        response.result = ProjectPoint.Response.RESULT_SUCCESS
+        try:
+            response.point = self.ipm.project_point(request.plane, request.point).point
+            response.result = ProjectPoint.Response.RESULT_SUCCESS
+        except InvalidPlaneException:
+            response.result = ProjectPoint.Response.RESULT_INVALID_PLANE
+        except NoIntersectionError:
+            response.result = ProjectPoint.Response.RESULT_NO_INTERSECTION
+
         return response
 
         # Map optional marking from '' to None
