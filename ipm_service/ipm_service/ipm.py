@@ -86,7 +86,16 @@ class IPMService(Node):
             response.result = ProjectPointCloud2.Response.RESULT_NO_CAMERA_INFO
             return response
 
-        response.result = ProjectPointCloud2.Response.RESULT_SUCCESS
+        try:
+            # Project the points
+            projected_points = self.ipm.project_points(
+                request.plane, read_points_numpy(request.points))
+            # Convert them into a PointCloud2
+            response.points = create_cloud_xyz32(projected_points)
+            response.result = ProjectPoint.Response.RESULT_SUCCESS
+        except InvalidPlaneException:
+            response.result = ProjectPoint.Response.RESULT_INVALID_PLANE
+
         return response
 
         # Map optional marking from '' to None

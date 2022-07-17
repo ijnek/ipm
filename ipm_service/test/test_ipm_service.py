@@ -19,9 +19,9 @@ from ipm_library.ipm import IPM
 from ipm_service.ipm import IPMService
 import rclpy
 from sensor_msgs.msg import CameraInfo
-# from sensor_msgs_py.point_cloud2 import create_cloud_xyz32
+from sensor_msgs_py.point_cloud2 import create_cloud_xyz32
 from shape_msgs.msg import Plane
-# from std_msgs.msg import Header
+from std_msgs.msg import Header
 from tf2_ros import Buffer
 
 
@@ -66,24 +66,6 @@ def test_project_point_no_camera_info():
     rclpy.shutdown()
 
 
-def test_project_point_cloud_no_camera_info():
-
-    rclpy.init()
-    ipm_service_node = IPMService()
-    test_node = rclpy.node.Node('test')
-
-    client = test_node.create_client(ProjectPointCloud2, 'project_pointcloud2')
-    future = client.call_async(ProjectPointCloud2.Request())
-    rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
-
-    rclpy.spin_once(test_node, timeout_sec=0.1)
-
-    assert future.result() is not None
-    assert future.result().result == ProjectPointCloud2.Response.RESULT_NO_CAMERA_INFO
-
-    rclpy.shutdown()
-
-
 def test_project_point_invalid_plane():
 
     rclpy.init()
@@ -97,8 +79,7 @@ def test_project_point_invalid_plane():
 
     client = test_node.create_client(ProjectPoint, 'project_point')
     # Request with the default plane a=b=c=0 should be an invalid plane
-    req = ProjectPoint.Request()
-    future = client.call_async(req)
+    future = client.call_async(ProjectPoint.Request())
     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
 
     rclpy.spin_once(test_node, timeout_sec=0.1)
@@ -181,7 +162,47 @@ def test_project_point():
     rclpy.shutdown()
 
 
-# def test_project_point_cloud():
+def test_project_point_cloud_no_camera_info():
+
+    rclpy.init()
+    ipm_service_node = IPMService()
+    test_node = rclpy.node.Node('test')
+
+    client = test_node.create_client(ProjectPointCloud2, 'project_pointcloud2')
+    future = client.call_async(ProjectPointCloud2.Request())
+    rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
+    rclpy.spin_once(test_node, timeout_sec=0.1)
+
+    assert future.result() is not None
+    assert future.result().result == ProjectPointCloud2.Response.RESULT_NO_CAMERA_INFO
+
+    rclpy.shutdown()
+
+
+def test_project_point_cloud_invalid_plane():
+
+    rclpy.init()
+    ipm_service_node = IPMService()
+    test_node = rclpy.node.Node('test')
+
+    camera_info_pub = test_node.create_publisher(CameraInfo, 'camera_info', 10)
+    camera_info = CameraInfo()
+    camera_info_pub.publish(camera_info)
+    rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
+    client = test_node.create_client(ProjectPointCloud2, 'project_pointcloud2')
+    # Request with the default plane a=b=c=0 should be an invalid plane
+    future = client.call_async(ProjectPointCloud2.Request(points=create_cloud_xyz32(Header(), [])))
+    rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
+    rclpy.spin_once(test_node, timeout_sec=0.1)
+
+    assert future.result() is not None
+    assert future.result().result == ProjectPointCloud2.Response.RESULT_INVALID_PLANE
+
+    rclpy.shutdown()
+
 
 #     rclpy.init()
 #     ipm_service_node = IPMService()

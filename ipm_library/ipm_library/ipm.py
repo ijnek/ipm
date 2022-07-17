@@ -127,8 +127,12 @@ class IPM:
         """
         assert self.camera_info_received(), 'No camera info set'
 
-        # Convert plane from general form to point normal form
-        plane = utils.plane_general_to_point_normal(plane_msg.plane)
+        if plane_msg.plane.coef[0] == 0 and plane_msg.plane.coef[1] == 0 and \
+           plane_msg.plane.coef[2] == 0:
+            raise InvalidPlaneException
+
+        # Convert plane to normal format
+        plane = utils.transform_to_normal_plane(plane_msg.plane)
 
         # View plane from camera frame
         plane_base_point, plane_normal = utils.transform_plane_to_frame(
