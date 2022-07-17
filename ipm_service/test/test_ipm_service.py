@@ -20,7 +20,7 @@ from sensor_msgs_py.point_cloud2 import create_cloud_xyz32
 from std_msgs.msg import Header
 
 
-def test_topics():
+def test_topics_and_services():
 
     rclpy.init()
     ipm_service_node = IPMService()
