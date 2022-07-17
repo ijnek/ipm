@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
-
 from ipm_interfaces.srv import ProjectPoint, ProjectPointCloud2
 # from ipm_library.ipm import IPM
 import rclpy
@@ -26,7 +24,7 @@ from std_msgs.msg import Header
 
 
 class IPMService(Node):
-    _camera_info: Optional[CameraInfo] = None
+    _has_recevied_camera_info = False
 
     def __init__(self) -> None:
         super().__init__('ipm_service')
@@ -43,14 +41,14 @@ class IPMService(Node):
             ProjectPointCloud2, 'project_pointcloud2', self.point_cloud_projection_callback)
 
     def camera_info_cb(self, msg: CameraInfo) -> None:
-        self._camera_info = msg
+        self._has_recevied_camera_info = True
 
     def point_projection_callback(
             self,
             request: ProjectPoint.Request,
             response: ProjectPoint.Response) -> ProjectPoint.Response:
 
-        if self._camera_info is None:
+        if not self._has_recevied_camera_info:
             response.result = ProjectPoint.Response.RESULT_NO_CAMERA_INFO
             return response
 
@@ -74,7 +72,7 @@ class IPMService(Node):
             request: ProjectPointCloud2.Request,
             response: ProjectPointCloud2.Response) -> ProjectPointCloud2.Response:
 
-        if self._camera_info is None:
+        if not self._has_recevied_camera_info:
             response.result = ProjectPointCloud2.Response.RESULT_NO_CAMERA_INFO
             return response
 
