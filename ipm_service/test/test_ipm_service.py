@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point
 from ipm_interfaces.msg import PlaneStamped
 from ipm_interfaces.srv import ProjectPoint, ProjectPointCloud2
-# from ipm_library.ipm import IPM
+from ipm_library.ipm import IPM
 from ipm_service.ipm import IPMService
 import rclpy
 from sensor_msgs.msg import CameraInfo
 # from sensor_msgs_py.point_cloud2 import create_cloud_xyz32
 from shape_msgs.msg import Plane
 # from std_msgs.msg import Header
-# from tf2_ros import Buffer
+from tf2_ros import Buffer
 
 
 def test_topics_and_services():
@@ -133,42 +133,52 @@ def test_project_point_no_intersection_error():
     rclpy.shutdown()
 
 
-# def test_project_point():
+def test_project_point():
 
-#     rclpy.init()
-#     ipm_service_node = IPMService()
-#     test_node = rclpy.node.Node('test')
+    rclpy.init()
+    ipm_service_node = IPMService()
+    test_node = rclpy.node.Node('test')
 
-#     camera_info_pub = test_node.create_publisher(CameraInfo, 'camera_info', 10)
-#     camera_info = CameraInfo()
-#     camera_info_pub.publish(camera_info)
-#     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+    camera_info_pub = test_node.create_publisher(CameraInfo, 'camera_info', 10)
+    camera_info = CameraInfo(
+        width=2048,
+        height=1536,
+        binning_x=4,
+        binning_y=4,
+        k=[1338.64532, 0., 1026.12387, 0., 1337.89746, 748.42213, 0., 0., 1.])
+    camera_info_pub.publish(camera_info)
+    rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
 
-#     point = Point()
-#     point.x = 1.0
-#     point.y = 1.0
-#     point.z = 1.0
+    point = Point()
+    point.x = 0.0
+    point.y = 0.0
 
-#     # YZ-plane at x = 1.0
-#     plane = PlaneStamped()
-#     plane.plane.coef[2] = 1.0
-#     plane.plane.coef[3] = -1.0
+    # YZ-plane at x = 1.0
+    # Create Plane in the same frame as our camera with 1m distance facing the camera
+    plane = PlaneStamped()
+    plane.plane.coef[2] = 1.0  # Normal in z direction
+    plane.plane.coef[3] = 1.0  # 1 meter distance
 
-#     client = test_node.create_client(ProjectPoint, 'project_point')
-#     req = ProjectPoint.Request(point=point, plane=plane)
-#     future = client.call_async(req)
-#     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+    # Create Point with the center pixel of the camera
+    point = Point()
+    point.x = float(camera_info.width // camera_info.binning_x // 2)
+    point.y = float(camera_info.height // camera_info.binning_y // 2)
 
-#     rclpy.spin_once(test_node, timeout_sec=0.1)
+    client = test_node.create_client(ProjectPoint, 'project_point')
+    req = ProjectPoint.Request(point=point, plane=plane)
+    future = client.call_async(req)
+    rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
 
-#     assert future.result() is not None
-#     assert future.result().result == ProjectPoint.Response.RESULT_SUCCESS
+    rclpy.spin_once(test_node, timeout_sec=0.1)
 
-#     ipm = IPM(Buffer(), camera_info)
-#     expected_point = ipm.project_point(plane, point)
-#     assert future.result().point == expected_point
+    assert future.result() is not None
+    assert future.result().result == ProjectPoint.Response.RESULT_SUCCESS
 
-#     rclpy.shutdown()
+    ipm = IPM(Buffer(), camera_info)
+    expected_point = ipm.project_point(plane, point)
+    assert future.result().point == expected_point.point
+
+    rclpy.shutdown()
 
 
 # def test_project_point_cloud():
