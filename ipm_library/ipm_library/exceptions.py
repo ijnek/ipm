@@ -14,7 +14,8 @@
 
 
 class InvalidPlaneException(Exception):
-    """Raised if a plane is invalid, i.e. a=b=c=0"""
+    """Raised if a plane is invalid, i.e. a=b=c=0."""
+
     pass
 
 
