@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
+
 from ipm_interfaces.srv import ProjectPoint, ProjectPointCloud2
 # from ipm_library.ipm import IPM
 import rclpy
@@ -24,6 +26,7 @@ from std_msgs.msg import Header
 
 
 class IPMService(Node):
+    _camera_info: Optional[CameraInfo] = None
 
     def __init__(self) -> None:
         super().__init__('ipm_service')
@@ -31,7 +34,7 @@ class IPMService(Node):
         # self.tf_listener = tf2.TransformListener(self.tf_buffer, self)
         # self.ipm = IPM(self.tf_buffer)
         self.camera_info_sub = self.create_subscription(
-            CameraInfo, 'camera_info', self.subscription_callback, 10)
+            CameraInfo, 'camera_info', self.camera_info_cb, 10)
         # self.camera_info_sub = self.create_subscription(
         #     CameraInfo, 'camera_info', self.ipm.set_camera_info)
         self.point_srv = self.create_service(
@@ -39,14 +42,19 @@ class IPMService(Node):
         self.point_cloud_srv = self.create_service(
             ProjectPointCloud2, 'project_pointcloud2', self.point_cloud_projection_callback)
 
-    def subscription_callback(self, msg):
-        return
+    def camera_info_cb(self, msg: CameraInfo) -> None:
+        self._camera_info = msg
 
     def point_projection_callback(
             self,
             request: ProjectPoint.Request,
             response: ProjectPoint.Response) -> ProjectPoint.Response:
-        response.result = ProjectPoint.Response.RESULT_NO_CAMERA_INFO
+
+        if self._camera_info is None:
+            response.result = ProjectPoint.Response.RESULT_NO_CAMERA_INFO
+            return response
+
+        response.result = ProjectPoint.Response.RESULT_SUCCESS
         return response
 
         # Map optional marking from '' to None
@@ -65,7 +73,12 @@ class IPMService(Node):
             self,
             request: ProjectPointCloud2.Request,
             response: ProjectPointCloud2.Response) -> ProjectPointCloud2.Response:
-        response.result = ProjectPointCloud2.Response.RESULT_NO_CAMERA_INFO
+
+        if self._camera_info is None:
+            response.result = ProjectPointCloud2.Response.RESULT_NO_CAMERA_INFO
+            return response
+
+        response.result = ProjectPointCloud2.Response.RESULT_SUCCESS
         return response
 
         # Map optional marking from '' to None

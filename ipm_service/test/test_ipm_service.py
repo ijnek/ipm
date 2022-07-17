@@ -15,6 +15,7 @@
 from ipm_interfaces.srv import ProjectPoint, ProjectPointCloud2
 from ipm_service.ipm import IPMService
 import rclpy
+from sensor_msgs.msg import CameraInfo
 from sensor_msgs_py.point_cloud2 import create_cloud_xyz32
 from std_msgs.msg import Header
 
@@ -55,8 +56,8 @@ def test_project_point_no_camera_info():
     req.point.y = 1.0
     req.point.z = 1.0
     future = client.call_async(req)
-
     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
     rclpy.spin_once(test_node, timeout_sec=0.1)
 
     assert future.result() is not None
@@ -76,11 +77,61 @@ def test_project_point_cloud_no_camera_info():
     req = ProjectPointCloud2.Request()
     req.points = create_cloud_xyz32(Header(), [])
     future = client.call_async(req)
-
     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
     rclpy.spin_once(test_node, timeout_sec=0.1)
 
     assert future.result() is not None
     assert future.result().result == ProjectPointCloud2.Response.RESULT_NO_CAMERA_INFO
+
+    rclpy.shutdown()
+
+
+def test_project_point():
+
+    rclpy.init()
+    ipm_service_node = IPMService()
+    test_node = rclpy.node.Node('test')
+
+    camera_info_pub = test_node.create_publisher(CameraInfo, 'camera_info', 10)
+    camera_info_pub.publish(CameraInfo())
+    rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
+    client = test_node.create_client(ProjectPoint, 'project_point')
+    req = ProjectPoint.Request()
+    req.point.x = 1.0
+    req.point.y = 1.0
+    req.point.z = 1.0
+    future = client.call_async(req)
+    rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
+    rclpy.spin_once(test_node, timeout_sec=0.1)
+
+    assert future.result() is not None
+    assert future.result().result == ProjectPoint.Response.RESULT_SUCCESS
+
+    rclpy.shutdown()
+
+
+def test_project_point_cloud():
+
+    rclpy.init()
+    ipm_service_node = IPMService()
+    test_node = rclpy.node.Node('test')
+
+    camera_info_pub = test_node.create_publisher(CameraInfo, 'camera_info', 10)
+    camera_info_pub.publish(CameraInfo())
+    rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
+    client = test_node.create_client(ProjectPointCloud2, 'project_pointcloud2')
+    req = ProjectPointCloud2.Request()
+    req.points = create_cloud_xyz32(Header(), [])
+    future = client.call_async(req)
+    rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
+    rclpy.spin_once(test_node, timeout_sec=0.1)
+
+    assert future.result() is not None
+    assert future.result().result == ProjectPoint.Response.RESULT_SUCCESS
 
     rclpy.shutdown()
