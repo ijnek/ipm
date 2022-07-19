@@ -91,7 +91,7 @@ class IPMService(Node):
             projected_points = self.ipm.project_points(
                 request.plane, read_points_numpy(request.points))
             # Convert them into a PointCloud2
-            response.points = create_cloud_xyz32(projected_points)
+            response.points = create_cloud_xyz32(Header(), projected_points)
             response.result = ProjectPoint.Response.RESULT_SUCCESS
         except InvalidPlaneException:
             response.result = ProjectPoint.Response.RESULT_INVALID_PLANE

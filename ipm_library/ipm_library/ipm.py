@@ -132,7 +132,7 @@ class IPM:
             raise InvalidPlaneException
 
         # Convert plane to normal format
-        plane = utils.transform_to_normal_plane(plane_msg.plane)
+        plane = utils.plane_general_to_point_normal(plane_msg.plane)
 
         # View plane from camera frame
         plane_base_point, plane_normal = utils.transform_plane_to_frame(

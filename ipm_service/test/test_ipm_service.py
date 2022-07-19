@@ -102,7 +102,7 @@ def test_project_point_no_intersection_error():
     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
 
     client = test_node.create_client(ProjectPoint, 'project_point')
-    req = ProjectPoint.Request(plane=PlaneStamped(plane=Plane(coef=[0, 0, 1, 1])))
+    req = ProjectPoint.Request(plane=PlaneStamped(plane=Plane(coef=[0, 0, -1, 1])))
     future = client.call_async(req)
     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
 
@@ -203,6 +203,36 @@ def test_project_point_cloud_invalid_plane():
 
     rclpy.shutdown()
 
+
+def _test_project_point_cloud_no_intersection_error():
+
+    rclpy.init()
+    ipm_service_node = IPMService()
+    test_node = rclpy.node.Node('test')
+
+    camera_info_pub = test_node.create_publisher(CameraInfo, 'camera_info', 10)
+    camera_info = CameraInfo()
+    camera_info_pub.publish(camera_info)
+    rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
+    client = test_node.create_client(ProjectPointCloud2, 'project_pointcloud2')
+    req = ProjectPointCloud2.Request(
+        points=create_cloud_xyz32(Header(), [[0, 0, 0]]),
+        plane=PlaneStamped(plane=Plane(coef=[0, 0, 1, 1])))
+    future = client.call_async(req)
+    rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
+
+    rclpy.spin_once(test_node, timeout_sec=0.1)
+
+    assert future.result() is not None
+    print(future.result().points)
+    assert future.result().result == ProjectPointCloud2.Response.RESULT_NO_INTERSECTION
+
+    rclpy.shutdown()
+
+
+def test_project_point_cloud():
+    pass
 
 #     rclpy.init()
 #     ipm_service_node = IPMService()
