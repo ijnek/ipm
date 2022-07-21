@@ -64,7 +64,7 @@ def test_ipm_project_point_no_transform():
     plane = PlaneStamped()
     plane.header.frame_id = 'camera_optical_frame'
     plane.plane.coef[2] = 1.0  # Normal in z direction
-    plane.plane.coef[3] = 1.0  # 1 meter distance
+    plane.plane.coef[3] = -1.0  # 1 meter distance
     # Create Point with the center pixel of the camera
     point = Point()
     point.x = float(cam.width // cam.binning_x // 2)
@@ -153,7 +153,7 @@ def test_ipm_project_point_no_transform_no_intersection():
     plane = PlaneStamped()
     plane.header.frame_id = 'camera_optical_frame'
     plane.plane.coef[2] = 1.0  # Normal in z direction
-    plane.plane.coef[3] = -1.0  # 1 meter distance
+    plane.plane.coef[3] = 1.0  # 1 meter distance
     # Create Point with the center pixel of the camera
     point = Point()
     point.x = float(cam.width // cam.binning_x // 2)
