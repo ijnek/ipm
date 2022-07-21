@@ -17,6 +17,7 @@ from ipm_interfaces.msg import PlaneStamped
 from ipm_interfaces.srv import ProjectPoint, ProjectPointCloud2
 from ipm_library.ipm import IPM
 from ipm_service.ipm import IPMService
+import numpy as np
 import rclpy
 from sensor_msgs.msg import CameraInfo
 from sensor_msgs_py.point_cloud2 import create_cloud_xyz32
@@ -134,16 +135,16 @@ def test_project_point():
     point.x = 0.0
     point.y = 0.0
 
-    # YZ-plane at x = 1.0
+    # XY-plane at z = 1.0
     # Create Plane in the same frame as our camera with 1m distance facing the camera
     plane = PlaneStamped()
     plane.plane.coef[2] = 1.0  # Normal in z direction
-    plane.plane.coef[3] = 1.0  # 1 meter distance
+    plane.plane.coef[3] = -1.0  # 1 meter distance
 
     # Create Point with the center pixel of the camera
     point = Point()
-    point.x = float(camera_info.width // camera_info.binning_x // 2)
-    point.y = float(camera_info.height // camera_info.binning_y // 2)
+    point.x = 200.0
+    point.y = 100.0
 
     client = test_node.create_client(ProjectPoint, 'project_point')
     req = ProjectPoint.Request(point=point, plane=plane)
