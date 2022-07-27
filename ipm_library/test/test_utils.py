@@ -20,8 +20,8 @@ from shape_msgs.msg import Plane
 def test_plane_general_to_point_normal_1():
     plane = Plane(coef=[2.0, 0.0, 0.0, -4.0])  # x = 2.0 (2.0x + 0y + 0z - 4.0 = 0)
     (n, p) = plane_general_to_point_normal(plane)
-    assert np.allclose(n, [1.0, 0.0, 0.0], rtol=0.0001)
-    assert np.allclose(p, [2.0, 0.0, 0.0], rtol=0.0001)
+    assert np.allclose(n, [2.0, 0.0, 0.0], rtol=0.0001)
+    assert np.allclose(p, [1.0, 0.0, 0.0], rtol=0.0001)
 
 
 def test_plane_general_to_point_normal_2():

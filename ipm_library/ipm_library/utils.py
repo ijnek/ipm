@@ -32,17 +32,13 @@ def plane_general_to_point_normal(plane: Plane) -> Tuple[np.ndarray, np.ndarray]
     """
     # ax + by + cz + d = 0 where a, b, c are the normal vector
     a, b, c, d = plane.coef
-
     # A perpendicular array to the plane
     perpendicular = np.array([a, b, c])
-
     # Get closest point from (0, 0, 0) to the plane
-    base_point = perpendicular * -d / np.dot(perpendicular, perpendicular)
-
+    point = perpendicular * -d / np.dot(perpendicular, perpendicular)
     # A normal vector to the plane
     normal = perpendicular / np.linalg.norm(perpendicular)
-
-    return normal, base_point
+    return point, normal
 
 
 def transform_plane_to_frame(

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from geometry_msgs.msg import Point, TransformStamped
-from ipm_interfaces.msg import PlaneStamped
+from geometry_msgs.msg import TransformStamped
+from ipm_interfaces.msg import PlaneStamped, Point2DStamped
 from ipm_library.exceptions import NoIntersectionError
 from ipm_library.ipm import IPM
 import numpy as np
@@ -45,7 +45,7 @@ def test_ipm_camera_info():
 
 
 def test_ipm_project_point_no_transform():
-    """Project Point without doing any tf transforms."""
+    """Project Point2DStamped without doing any tf transforms."""
     # We need to create a dummy tf buffer
     tf_buffer = tf2.Buffer()
     # Dummy camera info
@@ -65,10 +65,12 @@ def test_ipm_project_point_no_transform():
     plane.header.frame_id = 'camera_optical_frame'
     plane.plane.coef[2] = 1.0  # Normal in z direction
     plane.plane.coef[3] = -1.0  # 1 meter distance
-    # Create Point with the center pixel of the camera
-    point = Point()
-    point.x = float(cam.width // cam.binning_x // 2)
-    point.y = float(cam.height // cam.binning_y // 2)
+    # Create Point2DStamped with the center pixel of the camera
+    point_original_x = 100.0  # in pixels
+    point_original_y = 200.0  # in pixels
+    point_original = np.array([[point_original_x], [point_original_y]])
+    point_original_msg = Point2DStamped(
+        header=cam.header, point=Point2D(x=point_original_x, y=point_original_y))
     # Project points
     point_projected_msg = ipm.project_point(plane, point_original_msg)
     # Check header
@@ -85,64 +87,6 @@ def test_ipm_project_point_no_transform():
     # Projection doesn't consider the binning, so we need to correct for that
     point_reprojected_2d[0] = point_reprojected_2d[0] / cam.binning_x
     point_reprojected_2d[1] = point_reprojected_2d[1] / cam.binning_y
-    assert np.allclose(point_original, point_reprojected_2d, rtol=0.0001), \
-        'Projected point differs too much'
-
-def test_ipm_project_point_no_transform_2():
-    """Project Point without doing any tf transforms."""
-
-    # Dummy camera info
-    cam = CameraInfo(
-        header=Header(frame_id='camera_optical_frame'),
-        width=640,
-        height=480,
-        k=[820.04761,   0.     , 323.49421,
-           0.     , 819.164  , 238.75561,
-           0.     ,   0.     ,   1.     ],
-        p=[817.94043,   0.     , 328.28077,   0.     ,
-           0.     , 823.40967, 238.29577,   0.     ,
-           0.     ,   0.     ,   1.     ,   0.     ])
-    # Create an IPM
-    ipm = IPM(tf2.Buffer(), cam)
-    # Create Plane in the same frame as our camera with 1m distance facing the camera
-    plane = PlaneStamped()
-    plane.header.frame_id = 'camera_optical_frame'
-    plane.plane.coef[2] = 1.0  # Normal in z direction
-    plane.plane.coef[3] = -1.0  # 1 meter distance
-    # Create Point with the center pixel of the camera
-    point_original_x = 150.0  # in pixels
-    point_original_y = 20.0  # in pixels
-    point_original = np.array([[point_original_x], [point_original_y]])
-    print(point_original)
-    point_original_msg = Point(x=point_original_x, y=point_original_y)
-
-    # Project points
-    point_projected_msg = ipm.project_point(plane, point_original_msg)
-
-    # Project 3D point into 2D image using projection matrix P
-    # point = np.array([[point_projected_msg.point.x],
-    #                   [point_projected_msg.point.y],
-    #                   [point_projected_msg.point.z],
-    #                   [1.0]],dtype=np.float64)
-    # print(point)
-    # projection_matrix = np.reshape(cam.p, (3, 4))
-    # print(projection_matrix)
-
-    # Project 3D point into 2D image using projection matrix K
-    point_projected_vec = np.array([[point_projected_msg.point.x],
-                      [point_projected_msg.point.y],
-                      [point_projected_msg.point.z]], dtype=np.float64)
-    print(point_projected_vec)
-    projection_matrix = np.reshape(cam.k, (3, 3))
-    print(projection_matrix)
-
-    # Perform projection
-    point_reprojected_2d_vec = np.matmul(projection_matrix, point_projected_vec)
-    print(point_reprojected_2d_vec)
-
-    point_reprojected_2d = point_reprojected_2d_vec[0:2]
-    print(point_reprojected_2d)
-
     assert np.allclose(point_original, point_reprojected_2d, rtol=0.0001), \
         'Projected point differs too much'
 
@@ -192,7 +136,7 @@ def test_ipm_project_points_no_transform():
 
 
 def test_ipm_project_point_no_transform_no_intersection():
-    """Impossible projection of Point without doing any tf transforms."""
+    """Impossible projection of Point2DStamped without doing any tf transforms."""
     # We need to create a dummy tf buffer
     tf_buffer = tf2.Buffer()
     # Dummy camera info
@@ -212,10 +156,11 @@ def test_ipm_project_point_no_transform_no_intersection():
     plane.header.frame_id = 'camera_optical_frame'
     plane.plane.coef[2] = 1.0  # Normal in z direction
     plane.plane.coef[3] = 1.0  # 1 meter distance
-    # Create Point with the center pixel of the camera
-    point = Point()
-    point.x = float(cam.width // cam.binning_x // 2)
-    point.y = float(cam.height // cam.binning_y // 2)
+    # Create Point2DStamped with the center pixel of the camera
+    point = Point2DStamped()
+    point.header = cam.header
+    point.point.x = float(cam.width // cam.binning_x // 2)
+    point.point.y = float(cam.height // cam.binning_y // 2)
     # Test if a NoIntersectionError is raised
     with pytest.raises(NoIntersectionError):
         # Project points
@@ -262,7 +207,7 @@ def test_ipm_project_points_no_transform_no_intersection():
 
 
 def test_ipm_project_point():
-    """Project Point without doing any tf transforms."""
+    """Project Point2DStamped without doing any tf transforms."""
     # We need to create a dummy tf buffer
     tf_buffer = tf2.Buffer()
     transform = TransformStamped()
@@ -287,10 +232,11 @@ def test_ipm_project_point():
     plane = PlaneStamped()
     plane.header.frame_id = 'base_footprint'
     plane.plane.coef[2] = 1.0  # Normal in z direction
-    # Create Point with the center pixel of the camera
-    point = Point()
-    point.x = float(cam.width // cam.binning_x // 2)
-    point.y = float(cam.height // cam.binning_y // 2)
+    # Create Point2DStamped with the center pixel of the camera
+    point = Point2DStamped()
+    point.header = cam.header
+    point.point.x = float(cam.width // cam.binning_x // 2)
+    point.point.y = float(cam.height // cam.binning_y // 2)
     # Project points
     projected_point = ipm.project_point(
         plane, point, output_frame=plane.header.frame_id)
