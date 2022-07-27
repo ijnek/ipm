@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from geometry_msgs.msg import Point
-from ipm_interfaces.msg import PlaneStamped
+from ipm_interfaces.msg import PlaneStamped, Point2DStamped
 from ipm_interfaces.srv import ProjectPoint, ProjectPointCloud2
 from ipm_library.ipm import IPM
 from ipm_service.ipm import IPMService
-import numpy as np
+# import numpy as np
 import rclpy
 from sensor_msgs.msg import CameraInfo
 from sensor_msgs_py.point_cloud2 import create_cloud_xyz32
 from shape_msgs.msg import Plane
 from std_msgs.msg import Header
 from tf2_ros import Buffer
+from vision_msgs.msg import Point2D
 
 
 def test_topics_and_services():
@@ -131,20 +131,13 @@ def test_project_point():
     camera_info_pub.publish(camera_info)
     rclpy.spin_once(ipm_service_node, timeout_sec=0.1)
 
-    point = Point()
-    point.x = 0.0
-    point.y = 0.0
+    point = Point2DStamped(point=Point2D(x=100.0, y=100.0))
 
     # XY-plane at z = 1.0
     # Create Plane in the same frame as our camera with 1m distance facing the camera
     plane = PlaneStamped()
     plane.plane.coef[2] = 1.0  # Normal in z direction
     plane.plane.coef[3] = -1.0  # 1 meter distance
-
-    # Create Point with the center pixel of the camera
-    point = Point()
-    point.x = 200.0
-    point.y = 100.0
 
     client = test_node.create_client(ProjectPoint, 'project_point')
     req = ProjectPoint.Request(point=point, plane=plane)

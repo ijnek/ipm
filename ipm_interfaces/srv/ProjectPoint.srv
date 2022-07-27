@@ -1,5 +1,5 @@
 ipm_interfaces/PlaneStamped plane
-geometry_msgs/Point point
+ipm_interfaces/Point2DStamped point
 std_msgs/String output_frame
 ---
 # Result code defintions
