@@ -17,10 +17,8 @@ from typing import Optional
 from ipm_interfaces.msg import PlaneStamped, Point2DStamped
 from ipm_library import utils
 from ipm_library.exceptions import InvalidPlaneException, NoIntersectionError
-from ipm_msgs.msg import PlaneStamped, Point2DStamped
 import numpy as np
 from sensor_msgs.msg import CameraInfo
-from std_msgs.msg import Header
 from tf2_geometry_msgs import PointStamped
 import tf2_ros
 
@@ -53,6 +51,14 @@ class IPM:
         """
         self._camera_info = camera_info
 
+    def get_camera_info(self) -> CameraInfo:
+        """
+        Get the current CameraInfo.
+
+        :returns: The current camera info message.
+        """
+        return self._camera_info
+
     def camera_info_received(self) -> bool:
         """
         Return if `CameraInfo` message has been received.
@@ -72,7 +78,8 @@ class IPM:
         Uses latest CameraInfo intrinsics to convert `Point2DStamped` in image coordinates to 3D
         `Point` in output frame.
 
-        :param plane: Plane in which the mapping should happen
+        :param plane: Plane in which the mapping should happen.
+            Also provides the timestamp of the operation
         :param point: Point that should be mapped
         :param output_frame: TF2 frame in which the output should be provided
         :raise: InvalidPlaneException if the plane is invalid
@@ -86,7 +93,6 @@ class IPM:
         np_point = self.map_points(
             plane,
             np.array([[point.point.x, point.point.y]]),
-            point.header,
             output_frame=None)[0]
 
         # Check if we have any nan values, aka if we have a valid intersection
@@ -98,11 +104,11 @@ class IPM:
         intersection_stamped.point.x = np_point[0]
         intersection_stamped.point.y = np_point[1]
         intersection_stamped.point.z = np_point[2]
-        intersection_stamped.header.stamp = point.header.stamp
+        intersection_stamped.header.stamp = plane.header.stamp
         intersection_stamped.header.frame_id = self._camera_info.header.frame_id
 
         # Transform output point if output frame if needed
-        if output_frame is not None:
+        if output_frame not in [None, self._camera_info.header.frame_id]:
             intersection_stamped = self._tf_buffer.transform(
                 intersection_stamped, output_frame)
 
@@ -112,24 +118,23 @@ class IPM:
             self,
             plane_msg: PlaneStamped,
             points: np.ndarray,
-            points_header: Header,
             output_frame: Optional[str] = None) -> np.ndarray:
         """
         Map image points onto a given plane using the latest CameraInfo intrinsics.
 
-        :param plane_msg: Plane in which the mapping should happen
+        :param plane_msg: Plane in which the mapping should happen.
+            Also provides the timestamp of the operation
         :param points: Points that should be mapped in the form of
             a nx2 numpy array where n is the number of points
-        :param points_header: Header for the numpy message containing the frame and time stamp
         :param output_frame: TF2 frame in which the output should be provided
         :raise: InvalidPlaneException if the plane is invalid
         :returns: The points mapped onto the given plane in the output frame
         """
-        assert points_header.stamp == plane_msg.header.stamp, \
-            'Plane and Point need to have the same time stamp'
         assert self.camera_info_received(), 'No camera info set'
-        assert self._camera_info.header.frame_id == points_header.frame_id, \
-            'Points need to be in frame described in the camera info message'
+
+        if plane_msg.plane.coef[0] == 0 and plane_msg.plane.coef[1] == 0 and \
+           plane_msg.plane.coef[2] == 0:
+            raise InvalidPlaneException
 
         if plane_msg.plane.coef[0] == 0 and plane_msg.plane.coef[1] == 0 and \
            plane_msg.plane.coef[2] == 0:
@@ -143,7 +148,7 @@ class IPM:
             plane=plane,
             input_frame=plane_msg.header.frame_id,
             output_frame=self._camera_info.header.frame_id,
-            stamp=points_header.stamp,
+            stamp=plane_msg.header.stamp,
             buffer=self._tf_buffer)
 
         # Convert points to float if they aren't allready
@@ -158,11 +163,11 @@ class IPM:
             plane_base_point)
 
         # Transform output point if output frame if needed
-        if output_frame is not None:
+        if output_frame not in [None, self._camera_info.header.frame_id]:
             output_transformation = self._tf_buffer.lookup_transform(
                 output_frame,
                 self._camera_info.header.frame_id,
-                points_header.stamp)
+                plane_msg.header.stamp)
             np_points = utils.transform_points(
                 np_points, output_transformation.transform)
 

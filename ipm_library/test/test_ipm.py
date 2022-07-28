@@ -123,7 +123,7 @@ def test_ipm_map_points_no_transform():
         [0, 0, 0]
     ])
     # Map points
-    points_mapped = ipm.map_points(plane, points, cam.header)
+    points_mapped = ipm.map_points(plane, points)
     # Make goal points array, x and y are not exactly 0 because of the camera calibration as
     # well as an uneven amount of pixels
     goal_point_array = np.array([
@@ -194,7 +194,7 @@ def test_ipm_map_points_no_transform_no_intersection():
         [0, 0, 0]
     ])
     # Map points
-    points_mapped = ipm.map_points(plane, points, cam.header)
+    points_mapped = ipm.map_points(plane, points)
     # Make goal points array, x and y are not exactly 0 because of the camera calibration as
     # well as an uneven amount of pixels
     goal_point_array = np.array([
@@ -295,7 +295,6 @@ def test_ipm_map_points():
     points_mapped = ipm.map_points(
         plane,
         points=points,
-        points_header=cam.header,
         output_frame=plane.header.frame_id)
     # Make goal points array, x and y are not exactly 0 because of the camera calibration as
     # well as an uneven amount of pixels
