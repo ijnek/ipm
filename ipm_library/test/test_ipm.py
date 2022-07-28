@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from geometry_msgs.msg import TransformStamped
-from ipm_library.exceptions import NoIntersectionError
+from ipm_library.exceptions import InvalidPlaneException, NoIntersectionError
 from ipm_library.ipm import IPM
 from ipm_msgs.msg import PlaneStamped, Point2DStamped
 import numpy as np
@@ -306,3 +306,15 @@ def test_ipm_project_points():
     ])
     assert np.allclose(goal_point_array, projected_points, rtol=0.0001), \
         'Projected point differs too much'
+
+
+def test_project_point_invalid_plane_exception():
+    ipm = IPM(tf2.Buffer(), CameraInfo())
+    with pytest.raises(InvalidPlaneException):
+        ipm.project_point(PlaneStamped(), Point2DStamped())
+
+
+def test_project_points_invalid_plane_exception():
+    ipm = IPM(tf2.Buffer(), CameraInfo())
+    with pytest.raises(InvalidPlaneException):
+        ipm.project_points(PlaneStamped(), np.array([]), Header())
