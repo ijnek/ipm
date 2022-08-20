@@ -14,6 +14,7 @@
 
 from typing import Optional, Tuple
 
+from builtin_interfaces.msg import Time
 from geometry_msgs.msg import Transform
 import numpy as np
 from rclpy.duration import Duration
@@ -45,7 +46,7 @@ def transform_plane_to_frame(
         plane: Tuple[np.ndarray, np.ndarray],
         input_frame: str,
         output_frame: str,
-        stamp,
+        stamp: Time,
         buffer: tf2_ros.Buffer,
         timeout: Optional[Duration] = None) -> Tuple[np.ndarray, np.ndarray]:
     """

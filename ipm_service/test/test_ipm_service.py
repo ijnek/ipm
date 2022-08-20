@@ -258,7 +258,7 @@ def test_map_point_cloud():
 
     ipm = IPM(Buffer(), camera_info)
     expected_points = ipm.map_points(
-        plane, points, point_cloud.header)
+        plane, points, point_cloud.header.stamp)
 
     np.testing.assert_allclose(
         read_points_numpy(future.result().points),

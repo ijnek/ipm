@@ -14,12 +14,12 @@
 
 from typing import Optional
 
+from builtin_interfaces.msg import Time
 from ipm_interfaces.msg import PlaneStamped, Point2DStamped
 from ipm_library import utils
 from ipm_library.exceptions import InvalidPlaneException, NoIntersectionError
 import numpy as np
 from sensor_msgs.msg import CameraInfo
-from std_msgs.msg import Header
 from tf2_geometry_msgs import PointStamped
 import tf2_ros
 
@@ -79,6 +79,9 @@ class IPM:
         Uses latest CameraInfo intrinsics to convert `Point2DStamped` in image coordinates to 3D
         `Point` in output frame.
 
+        Performs transforms using the plane's frame_id and the point's timestamp.
+        The plane's timestamp and the point's frame_id IS IGNORED.
+
         :param plane: Plane in which the mapping should happen
         :param point: Point that should be mapped
         :param output_frame: TF2 frame in which the output should be provided
@@ -90,7 +93,7 @@ class IPM:
         np_point = self.map_points(
             plane,
             np.array([[point.point.x, point.point.y]]),
-            point.header,
+            point.header.stamp,
             output_frame=None)[0]
 
         # Check if we have any nan values, aka if we have a valid intersection
@@ -116,24 +119,23 @@ class IPM:
             self,
             plane_msg: PlaneStamped,
             points: np.ndarray,
-            points_header: Header,
+            stamp: Time,
             output_frame: Optional[str] = None) -> np.ndarray:
         """
         Map image points onto a given plane using the latest CameraInfo intrinsics.
 
+        Performs transforms using the plane_msg's frame_id and the stamp.
+        The plane's timestamp IS IGNORED.
+
         :param plane_msg: Plane in which the mapping should happen
         :param points: Points that should be mapped in the form of
             a nx2 numpy array where n is the number of points
-        :param points_header: Header for the numpy message containing the frame and time stamp
+        :param stamp: Header for the numpy message containing the frame and time stamp
         :param output_frame: TF2 frame in which the output should be provided
         :raise: InvalidPlaneException if the plane is invalid
         :returns: The points mapped onto the given plane in the output frame
         """
-        assert points_header.stamp == plane_msg.header.stamp, \
-            'Plane and Point need to have the same time stamp'
         assert self.camera_info_received(), 'No camera info set'
-        assert self._camera_info.header.frame_id == points_header.frame_id, \
-            'Points need to be in the frame described in the camera info message'
 
         if not np.any(plane_msg.plane.coef[:3]):
             raise InvalidPlaneException
@@ -146,7 +148,7 @@ class IPM:
             plane=plane,
             input_frame=plane_msg.header.frame_id,
             output_frame=self._camera_info.header.frame_id,
-            stamp=points_header.stamp,
+            stamp=stamp,
             buffer=self._tf_buffer)
 
         # Convert points to float if they aren't allready
@@ -165,7 +167,7 @@ class IPM:
             output_transformation = self._tf_buffer.lookup_transform(
                 output_frame,
                 self._camera_info.header.frame_id,
-                points_header.stamp)
+                stamp)
             np_points = utils.transform_points(
                 np_points, output_transformation.transform)
 

@@ -107,7 +107,7 @@ class IPMService(Node):
             mapped_points = self.ipm.map_points(
                 request.plane,
                 read_points_numpy(request.points),
-                request.points.header,
+                request.points.header.stamp,
                 output_frame)
 
             # Convert them into a PointCloud2

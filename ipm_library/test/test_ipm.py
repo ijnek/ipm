@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from builtin_interfaces.msg import Time
 from geometry_msgs.msg import TransformStamped
 from ipm_interfaces.msg import PlaneStamped, Point2DStamped
 from ipm_library.exceptions import InvalidPlaneException, NoIntersectionError
@@ -123,7 +124,7 @@ def test_ipm_map_points_no_transform():
         [0, 0, 0]
     ])
     # Map points
-    points_mapped = ipm.map_points(plane, points, cam.header)
+    points_mapped = ipm.map_points(plane, points, cam.header.stamp)
     # Make goal points array, x and y are not exactly 0 because of the camera calibration as
     # well as an uneven amount of pixels
     goal_point_array = np.array([
@@ -194,7 +195,7 @@ def test_ipm_map_points_no_transform_no_intersection():
         [0, 0, 0]
     ])
     # Map points
-    points_mapped = ipm.map_points(plane, points, cam.header)
+    points_mapped = ipm.map_points(plane, points, cam.header.stamp)
     # Make goal points array, x and y are not exactly 0 because of the camera calibration as
     # well as an uneven amount of pixels
     goal_point_array = np.array([
@@ -295,7 +296,7 @@ def test_ipm_map_points():
     points_mapped = ipm.map_points(
         plane,
         points=points,
-        points_header=cam.header,
+        stamp=cam.header.stamp,
         output_frame=plane.header.frame_id)
     # Make goal points array, x and y are not exactly 0 because of the camera calibration as
     # well as an uneven amount of pixels
@@ -319,4 +320,4 @@ def test_map_points_invalid_plane_exception():
     """Check InvalidPlaneException is raised if a plane is invalid, i.e. a=b=c=0."""
     ipm = IPM(tf2.Buffer(), CameraInfo())
     with pytest.raises(InvalidPlaneException):
-        ipm.map_points(PlaneStamped(), np.array([]), Header())
+        ipm.map_points(PlaneStamped(), np.array([]), Time())
