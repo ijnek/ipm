@@ -41,6 +41,7 @@ class IPMService(Node):
             MapPoint, 'map_point', self.point_mapping_callback)
         self.point_cloud_srv = self.create_service(
             MapPointCloud2, 'map_pointcloud2', self.point_cloud_mapping_callback)
+        self.get_logger().info('IPM Service node constructor')
 
     def point_mapping_callback(
             self,
@@ -53,9 +54,11 @@ class IPMService(Node):
         :param response: Service response instance
         :returns: Filled out service response
         """
+        self.get_logger().info('point_mapping_callback', throttle_duration_sec=10)
         # Check for camera info
         if not self.ipm.camera_info_received():
             response.result = MapPoint.Response.RESULT_NO_CAMERA_INFO
+            self.get_logger().info('No camera info received', throttle_duration_sec=10)
             return response
 
         # Map optional plane_frame_id from '' to None
@@ -79,6 +82,7 @@ class IPMService(Node):
                 plane_frame_id,
                 output_frame_id)
             response.result = MapPoint.Response.RESULT_SUCCESS
+            self.get_logger().info('Success, returning mapped point', throttle_duration_sec=10)
         except NoIntersectionError:
             response.result = MapPoint.Response.RESULT_NO_INTERSECTION
         except InvalidPlaneException:
